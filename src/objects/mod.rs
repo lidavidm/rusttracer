@@ -46,16 +46,29 @@ impl Color {
 
 impl Scene {
     pub fn intersects(&self, ray: &Ray) -> Option<(&MaterialObject, f64)> {
-        for materialobject in self.objects.iter() {
+        self.objects.iter().fold(None, |result, materialobject| {
             let (ref object, _) = *materialobject;
             match intersects(&ray, object) {
                 Some(t) => {
-                    return Some((&materialobject, t))
+                    match result {
+                        Some((_, t_prev)) => {
+                            if t < t_prev {
+                                Some((&materialobject, t))
+                            }
+                            else {
+                                result
+                            }
+                        }
+                        None => {
+                            Some((&materialobject, t))
+                        }
+                    }
                 }
-                None => {}
+                None => {
+                    result
+                }
             }
-        }
-        None
+        })
     }
 }
 

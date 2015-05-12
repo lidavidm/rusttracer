@@ -8,7 +8,7 @@ use raytrace::*;
 
 fn main() {
     let sphere = Object::Sphere {
-        center: Vec3::new(0.0, 0.0, -2.0),
+        center: Vec3::new(0.0, 0.0, -3.0),
         radius: 0.5
     };
     let material = Material {
@@ -18,6 +18,17 @@ fn main() {
         specular_exponent: 10.0
     };
 
+    let sphere2 = Object::Sphere {
+        center: Vec3::new(0.5, 0.0, -2.0),
+        radius: 0.5
+    };
+    let material2 = Material {
+        ambient: Color::new(0.2, 0.0, 0.2),
+        diffuse: Color::new(1.0, 1.0, 1.0),
+        specular: Color::new(1.0, 1.0, 1.0),
+        specular_exponent: 100.0
+    };
+
     let scene = Scene {
         camera: Camera {
             position: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
@@ -25,7 +36,7 @@ fn main() {
             up: Vec3 { x: 0.0, y: 1.0, z: 0.0 }
         },
         lights: vec![Light { position: Point::new(0.0, 0.0, 0.0), color: Color::new(1.0, 1.0, 1.0), intensity: 1.0 }],
-        objects: vec![(sphere, material)]
+        objects: vec![(sphere, material), (sphere2, material2)]
     };
     raytrace(&scene, 320, 240, std::f64::consts::PI / 3.5);
 }
