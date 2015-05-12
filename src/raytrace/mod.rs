@@ -7,6 +7,9 @@ use objects::*;
 
 pub type Image = image::RgbImage;
 
+// This should really use Color::new. A Color is secretly a vector.
+const BACKGROUND_COLOR: Color = Color { x: 0.4, y: 0.4, z: 0.4 };
+
 pub fn write_image(image: Image, filename: &str) {
     let _ = image.save(&Path::new(filename));
 }
@@ -41,23 +44,22 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
             };
 
             match scene.intersects(&ray) {
-                Some(_) => {
-                    (255.0, 0.0, 255.0)
+                Some((materialobject, _)) => {
+                    let (_, ref material) = *materialobject;
+                    (*material).ambient
                 }
                 None => {
-                    (100.0, 100.0, 100.0)
+                    BACKGROUND_COLOR
                 }
             }
         };
-        let (r1, g1, b1) = cast_ray(0.0, 0.0);
-        let (r2, g2, b2) = cast_ray(1.0, 0.0);
-        let (r3, g3, b3) = cast_ray(0.5, 0.5);
-        let (r4, g4, b4) = cast_ray(0.0, 1.0);
-        let (r5, g5, b5) = cast_ray(1.0, 1.0);
+        let c1 = cast_ray(0.0, 0.0);
+        let c2 = cast_ray(1.0, 0.0);
+        let c3 = cast_ray(0.5, 0.5);
+        let c4 = cast_ray(0.0, 1.0);
+        let c5 = cast_ray(1.0, 1.0);
 
-        *pixel = image::Rgb([((r1 + r2 + r3 + r4 + r5) / 5.0) as u8,
-                             ((g1 + g2 + g3 + g4 + g5) / 5.0) as u8,
-                             ((b1 + b2 + b3 + b4 + b5) / 5.0) as u8]);
+        *pixel = ((c1 + c2 + c3 + c4 + c5) / 5.0).to_rgb();
     }
 
     write_image(image, "test.png");

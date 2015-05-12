@@ -8,6 +8,12 @@ pub enum Object {
     Sphere { center: Point, radius: f64 }
 }
 
+pub struct Material {
+    pub ambient: Color
+}
+
+pub type MaterialObject = (Object, Material);
+
 pub struct Light {
     pub position: Point,
     pub color: Color,
@@ -23,7 +29,7 @@ pub struct Camera {
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub objects: Vec<Object>,
+    pub objects: Vec<MaterialObject>,
 }
 
 impl Color {
@@ -35,11 +41,12 @@ impl Color {
 }
 
 impl Scene {
-    pub fn intersects(&self, ray: &Ray) -> Option<(&Object, f64)> {
-        for object in self.objects.iter() {
-            match intersects(&ray, &object) {
+    pub fn intersects(&self, ray: &Ray) -> Option<(&MaterialObject, f64)> {
+        for materialobject in self.objects.iter() {
+            let (ref object, _) = *materialobject;
+            match intersects(&ray, object) {
                 Some(t) => {
-                    return Some((&object, t))
+                    return Some((&materialobject, t))
                 }
                 None => {}
             }
