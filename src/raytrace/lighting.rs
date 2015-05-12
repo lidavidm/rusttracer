@@ -14,21 +14,10 @@ fn get_ambient_color(material: &Material) -> Color {
     (*material).ambient
 }
 
-fn get_diffuse_color(scene: &Scene, light: &Light,
-                     material: &Material, ray: &Ray) -> Color {
-    let distance = ray.direction.mag_squared();
-
-    // TODO: why are we self-intersecting?
-    let scale = (light.intensity / distance) * (match scene.intersects(&ray) {
-        Some(_) => {
-            0.9
-        }
-        None => {
-            1.0
-        }
-    });
-
-    (*material).diffuse * scale
+fn get_diffuse_color(light: &Light, material: &Material,
+                     n: Vec3, l: Vec3) -> Color {
+    ((*material).diffuse * (*light).color *
+        n.dot(l).max(0.0) * (*light).intensity)
 }
 
 fn get_specular_color(material: &Material,
@@ -50,10 +39,10 @@ pub fn get_color(scene: &Scene, materialobject: &MaterialObject,
             origin: collision - (direction * 0.00001),
             direction: direction
         };
-        let l = light.position - collision;
+        let l = (light.position - collision).normalized();
         let v = new_ray.origin - new_ray.direction;
 
-        let diffuse = get_diffuse_color(scene, &light, material, &new_ray);
+        let diffuse = get_diffuse_color(&light, material, normal, l);
         let specular = get_specular_color(material, l, v, normal);
         (prev_color + diffuse + specular, prev_rays + 1)
     })
