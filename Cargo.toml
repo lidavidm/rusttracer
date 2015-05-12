@@ -5,3 +5,4 @@ authors = ["David Li <li.davidm96@gmail.com>"]
 
 [dependencies]
 image = "*"
+time = "0.1"

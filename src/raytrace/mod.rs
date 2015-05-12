@@ -1,4 +1,5 @@
 extern crate image;
+extern crate time;
 
 use std::path::Path;
 
@@ -27,8 +28,13 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let norm_up = scene.camera.up.normalized();
     let norm_right = scene.camera.direction.cross(scene.camera.up).normalized();
 
+    let mut rays = 0;
+
+    let start_time = time::precise_time_ns();
+
     for (x, y, pixel) in image.enumerate_pixels_mut() {
-        let cast_ray = |dx: f64, dy: f64| {
+        let cast_ray = |dx: f64, dy: f64, rays: &mut i32| {
+            *rays += 1;
             let fi = (x as f64) + dx;
             let fj = (y as f64) + dy;
 
@@ -53,14 +59,19 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
                 }
             }
         };
-        let c1 = cast_ray(0.0, 0.0);
-        let c2 = cast_ray(1.0, 0.0);
-        let c3 = cast_ray(0.5, 0.5);
-        let c4 = cast_ray(0.0, 1.0);
-        let c5 = cast_ray(1.0, 1.0);
+        // This makes the compiler happy. I'm not really sure what's going
+        // on though.
+        let c1 = cast_ray(0.0, 0.0, &mut rays);
+        let c2 = cast_ray(1.0, 0.0, &mut rays);
+        let c3 = cast_ray(0.5, 0.5, &mut rays);
+        let c4 = cast_ray(0.0, 1.0, &mut rays);
+        let c5 = cast_ray(1.0, 1.0, &mut rays);
 
         *pixel = ((c1 + c2 + c3 + c4 + c5) / 5.0).to_rgb();
     }
 
     write_image(image, "test.png");
+
+    let elapsed_time = (time::precise_time_ns() - start_time) / 1000000;
+    println!("Traced {} rays in {} ms.", rays, elapsed_time);
 }
