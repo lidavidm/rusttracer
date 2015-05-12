@@ -10,7 +10,9 @@ pub enum Object {
 
 pub struct Material {
     pub ambient: Color,
-    pub diffuse: Color
+    pub diffuse: Color,
+    pub specular: Color,
+    pub specular_exponent: f64
 }
 
 pub type MaterialObject = (Object, Material);

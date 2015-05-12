@@ -13,7 +13,9 @@ fn main() {
     };
     let material = Material {
         ambient: Color::new(0.0, 0.2, 0.2),
-        diffuse: Color::new(1.0, 1.0, 1.0)
+        diffuse: Color::new(1.0, 1.0, 1.0),
+        specular: Color::new(1.0, 1.0, 1.0),
+        specular_exponent: 10.0
     };
 
     let scene = Scene {

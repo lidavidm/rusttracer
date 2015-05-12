@@ -52,7 +52,6 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
             match scene.intersects(&ray) {
                 Some((materialobject, t)) => {
-                    let (ref object, ref material) = *materialobject;
                     let (color, new_rays) =
                         lighting::get_color(&scene, &materialobject, &ray, t);
                     *rays += new_rays;
