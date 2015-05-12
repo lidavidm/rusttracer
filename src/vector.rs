@@ -27,6 +27,26 @@ impl Vec3 {
 
         (x1 * x2) + (y1 * y2) + (z1 * z2)
     }
+
+    pub fn cross(self, other: Vec3) -> Vec3 {
+        let Vec3 { x: x1, y: y1, z: z1 } = self;
+        let Vec3 { x: x2, y: y2, z: z2 } = other;
+
+        Vec3 { x: y1 * z2 - z1 * y2,
+               y: z1 * x2 - x1 * z2,
+               z: x1 * y2 - y1 * x2 }
+    }
+
+    pub fn mag_squared(self) -> f64 {
+        self.dot(self)
+    }
+
+    pub fn normalized(self) -> Vec3 {
+        let mag = self.mag_squared().sqrt();
+        let Vec3 { x: x1, y: y1, z: z1 } = self;
+
+        Vec3 { x: x1 / mag, y: y1 / mag, z: z1 / mag }
+    }
 }
 
 impl Add for Vec3 {

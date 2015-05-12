@@ -9,9 +9,21 @@ pub enum Object {
 }
 
 pub struct Light {
-    position: Point,
-    color: Color,
-    intensity: f64
+    pub position: Point,
+    pub color: Color,
+    pub intensity: f64
+}
+
+pub struct Camera {
+    pub position: Point,
+    pub direction: Vec3,
+    pub up: Vec3
+}
+
+pub struct Scene {
+    pub camera: Camera,
+    pub lights: Vec<Light>,
+    pub objects: Object,
 }
 
 impl Color {
