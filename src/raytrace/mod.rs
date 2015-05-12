@@ -29,19 +29,22 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
         let fj = (y as f64) + 0.5;
 
         let u_rel = vw_per_pixel * (fi - (f_width / 2.0));
-        let v_rel = vh_per_pixel * (fi - (f_height / 2.0));
+        let v_rel = vh_per_pixel * (fj - (f_height / 2.0));
 
         let pixel_loc = scene.camera.position + scene.camera.direction +
             (norm_right * u_rel) + (norm_up * v_rel);
-        let ray = Ray { origin: pixel_loc,
-                        direction: pixel_loc - scene.camera.position };
+
+        let ray = Ray {
+            origin: scene.camera.position,
+            direction: pixel_loc - scene.camera.position
+        };
 
         match intersects(&ray, &scene.objects) {
             Some(_) => {
                 *pixel = image::Rgb([255, 0, 255]);
             }
             None => {
-                *pixel = image::Rgb([0, 0, 0]);
+                *pixel = image::Rgb([100, 100, 100]);
             }
         }
     }
