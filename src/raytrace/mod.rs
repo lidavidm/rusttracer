@@ -5,6 +5,7 @@ use std::path::Path;
 
 use vector::*;
 use objects::*;
+mod lighting;
 
 pub type Image = image::RgbImage;
 
@@ -28,12 +29,12 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let norm_up = scene.camera.up.normalized();
     let norm_right = scene.camera.direction.cross(scene.camera.up).normalized();
 
-    let mut rays = 0;
+    let mut rays: u64 = 0;
 
     let start_time = time::precise_time_ns();
 
     for (x, y, pixel) in image.enumerate_pixels_mut() {
-        let cast_ray = |dx: f64, dy: f64, rays: &mut i32| {
+        let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
             *rays += 1;
             let fi = (x as f64) + dx;
             let fj = (y as f64) + dy;
@@ -50,9 +51,12 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
             };
 
             match scene.intersects(&ray) {
-                Some((materialobject, _)) => {
-                    let (_, ref material) = *materialobject;
-                    (*material).ambient
+                Some((materialobject, t)) => {
+                    let (ref object, ref material) = *materialobject;
+                    let (color, new_rays) =
+                        lighting::get_color(&scene, &materialobject, &ray, t);
+                    *rays += new_rays;
+                    color
                 }
                 None => {
                     BACKGROUND_COLOR
@@ -72,6 +76,9 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
     write_image(image, "test.png");
 
-    let elapsed_time = (time::precise_time_ns() - start_time) / 1000000;
-    println!("Traced {} rays in {} ms.", rays, elapsed_time);
+    let elapsed_time = ((time::precise_time_ns() - start_time) as f64) /
+        1000000.0;
+    let rays_per_s = 1000.0 * (rays as f64) / elapsed_time;
+    println!("Traced {} rays in {} ms ({} rays per second).",
+             rays, elapsed_time, rays_per_s);
 }

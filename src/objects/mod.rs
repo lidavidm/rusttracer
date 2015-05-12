@@ -9,7 +9,8 @@ pub enum Object {
 }
 
 pub struct Material {
-    pub ambient: Color
+    pub ambient: Color,
+    pub diffuse: Color
 }
 
 pub type MaterialObject = (Object, Material);
