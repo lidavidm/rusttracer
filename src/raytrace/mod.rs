@@ -40,7 +40,7 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
                 direction: pixel_loc - scene.camera.position
             };
 
-            match intersects(&ray, &scene.objects) {
+            match scene.intersects(&ray) {
                 Some(_) => {
                     (255.0, 0.0, 255.0)
                 }

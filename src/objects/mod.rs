@@ -23,14 +23,28 @@ pub struct Camera {
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub objects: Object,
+    pub objects: Vec<Object>,
 }
 
 impl Color {
-    fn to_rgb(&self) -> image::Rgb<u8> {
+    pub fn to_rgb(&self) -> image::Rgb<u8> {
         image::Rgb { data: [(self.x * 255.0) as u8,
                             (self.y * 255.0) as u8,
                             (self.z * 255.0) as u8] }
+    }
+}
+
+impl Scene {
+    pub fn intersects(&self, ray: &Ray) -> Option<(&Object, f64)> {
+        for object in self.objects.iter() {
+            match intersects(&ray, &object) {
+                Some(t) => {
+                    return Some((&object, t))
+                }
+                None => {}
+            }
+        }
+        None
     }
 }
 

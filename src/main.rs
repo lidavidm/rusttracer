@@ -19,7 +19,7 @@ fn main() {
             up: Vec3 { x: 0.0, y: 1.0, z: 0.0 }
         },
         lights: Vec::new(),
-        objects: sphere
+        objects: vec![sphere]
     };
     raytrace(&scene, 200, 200, std::f64::consts::PI / 3.5);
 }
