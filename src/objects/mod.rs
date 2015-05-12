@@ -35,9 +35,10 @@ pub struct Scene {
 
 impl Color {
     pub fn to_rgb(&self) -> image::Rgb<u8> {
-        image::Rgb { data: [(self.x * 255.0) as u8,
-                            (self.y * 255.0) as u8,
-                            (self.z * 255.0) as u8] }
+        // TODO: implement tonemapping (by parameterizing color on a trait?)
+        image::Rgb { data: [(self.x.min(1.0) * 255.0) as u8,
+                            (self.y.min(1.0) * 255.0) as u8,
+                            (self.z.min(1.0) * 255.0) as u8] }
     }
 }
 
