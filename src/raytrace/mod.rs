@@ -64,11 +64,11 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
         };
         // This makes the compiler happy. I'm not really sure what's going
         // on though.
-        let c1 = cast_ray(0.0, 0.0, &mut rays);
-        let c2 = cast_ray(1.0, 0.0, &mut rays);
-        let c3 = cast_ray(0.5, 0.5, &mut rays);
-        let c4 = cast_ray(0.0, 1.0, &mut rays);
-        let c5 = cast_ray(1.0, 1.0, &mut rays);
+        let c1 = cast_ray(0.25, 0.25, &mut rays);
+        let c2 = cast_ray(0.75, 0.25, &mut rays);
+        let c3 = cast_ray(0.50, 0.50, &mut rays);
+        let c4 = cast_ray(0.75, 0.75, &mut rays);
+        let c5 = cast_ray(0.25, 0.75, &mut rays);
 
         *pixel = ((c1 + c2 + c3 + c4 + c5) / 5.0).to_rgb();
     }
