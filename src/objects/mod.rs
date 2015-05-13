@@ -72,7 +72,7 @@ impl Scene {
     }
 }
 
-const T_THRESHOLD: f64 = 0.00001;
+const T_THRESHOLD: f64 = 0.00000001;
 
 pub fn intersects(ray: &Ray, object: &Object) -> Option<f64> {
     let Ray { origin: e, direction: d } = *ray;
