@@ -9,9 +9,6 @@ mod lighting;
 
 pub type Image = image::RgbImage;
 
-// This should really use Color::new. A Color is secretly a vector.
-const BACKGROUND_COLOR: Color = Color { x: 0.4, y: 0.4, z: 0.4 };
-
 pub fn write_image(image: Image, filename: &str) {
     let _ = image.save(&Path::new(filename));
 }
@@ -50,17 +47,9 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
                 direction: pixel_loc - scene.camera.position
             };
 
-            match scene.intersects(&ray) {
-                Some((materialobject, t)) => {
-                    let (color, new_rays) =
-                        lighting::get_color(&scene, &materialobject, &ray, t);
-                    *rays += new_rays;
-                    color
-                }
-                None => {
-                    BACKGROUND_COLOR
-                }
-            }
+            let (color, new_rays) = lighting::get_color(&scene, &ray, 3);
+            *rays += new_rays;
+            color
         };
         // This makes the compiler happy. I'm not really sure what's going
         // on though.
