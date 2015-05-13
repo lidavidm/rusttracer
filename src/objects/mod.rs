@@ -74,19 +74,20 @@ impl Scene {
 
 const T_THRESHOLD: f64 = 0.00001;
 
-#[inline(always)]
-fn square(x: f64) -> f64 {
-    x * x
-}
-
 pub fn intersects(ray: &Ray, object: &Object) -> Option<f64> {
     let Ray { origin: e, direction: d } = *ray;
     match *object {
         Object::Sphere { center: c, radius: r } => {
-            let discrim = square(d.dot(e - c)) -
-                (d.dot(d)) * ((e - c).dot(e-c) - square(r));
+            let discrim = d.dot(e - c).powi(2) -
+                (d.dot(d)) * ((e - c).dot(e-c) - r.powi(2));
             if discrim > T_THRESHOLD {
-                Some (((-d).dot(e - c) + discrim.sqrt()) / (d.dot(d)))
+                let t = ((-d).dot(e - c) + discrim.sqrt()) / (d.dot(d));
+                if t > T_THRESHOLD {
+                    Some(t)
+                }
+                else {
+                    None
+                }
             }
             else {
                 None
