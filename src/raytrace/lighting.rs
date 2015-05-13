@@ -16,9 +16,8 @@ fn get_ambient_color(material: &Material) -> Color {
 
 fn get_diffuse_color(light: &Light, material: &Material,
                      n: Vec3, l: Vec3, distance: f64) -> Color {
-    // TODO: why do I need this abs
     (material.diffuse * (*light).color *
-        n.dot(l).abs() * (*light).intensity / distance)
+        n.dot(l) * (*light).intensity / distance)
 }
 
 fn get_specular_color(material: &Material,

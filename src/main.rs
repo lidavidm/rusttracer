@@ -19,8 +19,8 @@ fn main() {
     };
 
     let sphere2 = Object::Sphere {
-        center: Vec3::new(0.5, 0.0, -2.0),
-        radius: 0.5
+        center: Vec3::new(0.25, 0.0, -1.0),
+        radius: 0.1
     };
     let material2 = Material {
         ambient: Color::new(0.2, 0.0, 0.2),
