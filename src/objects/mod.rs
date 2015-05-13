@@ -81,12 +81,23 @@ pub fn intersects(ray: &Ray, object: &Object) -> Option<f64> {
             let discrim = d.dot(e - c).powi(2) -
                 (d.dot(d)) * ((e - c).dot(e-c) - r.powi(2));
             if discrim > T_THRESHOLD {
-                let t = ((-d).dot(e - c) + discrim.sqrt()) / (d.dot(d));
-                if t > T_THRESHOLD {
-                    Some(t)
-                }
-                else {
-                    None
+                let sqrtd = discrim.sqrt();
+                let t1 = ((-d).dot(e - c) - sqrtd) / (d.dot(d));
+                let t2 = ((-d).dot(e - c) + sqrtd) / (d.dot(d));
+                match (t1 >= T_THRESHOLD, t2 >= T_THRESHOLD, t1 >= t2) {
+                    (true, false, true) |
+                    (true, true, false) |
+                    (true, false, false) => {
+                        Some(t1)
+                    }
+                    (false, true, true) |
+                    (false, true, false) |
+                    (true, true, true) => {
+                        Some(t2)
+                    }
+                    _ => {
+                        None
+                    }
                 }
             }
             else {
