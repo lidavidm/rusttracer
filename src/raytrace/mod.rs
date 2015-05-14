@@ -1,6 +1,7 @@
 extern crate image;
 extern crate time;
 
+use std::iter;
 use std::path::Path;
 
 use vector::*;
@@ -21,16 +22,20 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let vw_per_pixel = 2.0 * (h_fov / 2.0).tan() / f_width;
     let vh_per_pixel = 2.0 * (v_fov / 2.0).tan() / f_height;
 
-    let mut image = image::RgbImage::new(width, height);
-
     let norm_up = scene.camera.up.normalized();
     let norm_right = scene.camera.direction.cross(scene.camera.up).normalized();
 
-    let mut rays: u64 = 0;
-
+    let mut image = image::RgbImage::new(width, height);
     let start_time = time::precise_time_ns();
 
-    for (x, y, pixel) in image.enumerate_pixels_mut() {
+    let mut rays: u64 = 0;
+
+    // This is ugly, but splitting it out into a let binding makes the
+    // compiler sad.
+    for ((x, y), pixel) in (0..width).flat_map(|y| {
+        iter::repeat(y).zip(0..height)
+    }).map(|coord| {
+        let (x, y) = coord;
         let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
             *rays += 1;
             let fi = (x as f64) + dx;
@@ -59,7 +64,9 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
         let c4 = cast_ray(0.75, 0.75, &mut rays);
         let c5 = cast_ray(0.25, 0.75, &mut rays);
 
-        *pixel = ((c1 + c2 + c3 + c4 + c5) / 5.0).to_rgb();
+        (coord, (c1 + c2 + c3 + c4 + c5) / 5.0)
+    }) {
+        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
     }
 
     write_image(image, "test.png");
