@@ -3,6 +3,7 @@ extern crate time;
 
 use std::iter;
 use std::path::Path;
+use std::thread;
 
 use vector::*;
 use objects::*;
@@ -28,11 +29,11 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let mut image = image::RgbImage::new(width, height);
     let start_time = time::precise_time_ns();
 
-    let mut rays: u64 = 0;
+    let mut rays = 0;
 
-    let tracer = |image: &mut image::RgbImage, rays: &mut u64| {
+    let tracer = |rays: &mut u64, row_start, num_rows| {
         let coords = (0..width).flat_map(|y| {
-            iter::repeat(y).zip(0..height)
+            iter::repeat(y).zip(row_start..num_rows)
         });
         let trace_coord = |coord| {
             let (x, y) = coord;
@@ -65,11 +66,20 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
             (coord, (c1 + c2 + c3 + c4 + c5) / 5.0)
         };
-        for ((x, y), pixel) in coords.map(trace_coord) {
-            image.put_pixel(x as u32, y as u32, pixel.to_rgb());
+
+        let mut result = Vec::with_capacity((num_rows * width) as usize);
+        for pixel in coords.map(trace_coord) {
+            result.push(pixel)
         }
+
+        result
     };
-    tracer(&mut image, &mut rays);
+
+    let pixels = tracer(&mut rays, 0, height);
+
+    for ((x, y), pixel) in pixels {
+        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
+    }
 
     write_image(image, "test.png");
 
