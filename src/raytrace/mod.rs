@@ -30,44 +30,46 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
     let mut rays: u64 = 0;
 
-    // This is ugly, but splitting it out into a let binding makes the
-    // compiler sad.
-    for ((x, y), pixel) in (0..width).flat_map(|y| {
-        iter::repeat(y).zip(0..height)
-    }).map(|coord| {
-        let (x, y) = coord;
-        let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
-            *rays += 1;
-            let fi = (x as f64) + dx;
-            let fj = (y as f64) + dy;
+    let tracer = |image: &mut image::RgbImage, rays: &mut u64| {
+        let coords = (0..width).flat_map(|y| {
+            iter::repeat(y).zip(0..height)
+        });
+        let trace_coord = |coord| {
+            let (x, y) = coord;
+            let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
+                *rays += 1;
+                let fi = (x as f64) + dx;
+                let fj = (y as f64) + dy;
 
-            let u_rel = vw_per_pixel * (fi - (f_width / 2.0));
-            let v_rel = vh_per_pixel * (fj - (f_height / 2.0));
+                let u_rel = vw_per_pixel * (fi - (f_width / 2.0));
+                let v_rel = vh_per_pixel * (fj - (f_height / 2.0));
 
-            let pixel_loc = scene.camera.position + scene.camera.direction +
-                (norm_right * u_rel) + (norm_up * v_rel);
+                let pixel_loc = scene.camera.position + scene.camera.direction +
+                    (norm_right * u_rel) + (norm_up * v_rel);
 
-            let ray = Ray {
-                origin: scene.camera.position,
-                direction: pixel_loc - scene.camera.position
+                let ray = Ray {
+                    origin: scene.camera.position,
+                    direction: pixel_loc - scene.camera.position
+                };
+
+                let (color, new_rays) = lighting::get_color(&scene, &ray, 3);
+                *rays += new_rays;
+                color
             };
 
-            let (color, new_rays) = lighting::get_color(&scene, &ray, 3);
-            *rays += new_rays;
-            color
-        };
-        // This makes the compiler happy. I'm not really sure what's going
-        // on though.
-        let c1 = cast_ray(0.25, 0.25, &mut rays);
-        let c2 = cast_ray(0.75, 0.25, &mut rays);
-        let c3 = cast_ray(0.50, 0.50, &mut rays);
-        let c4 = cast_ray(0.75, 0.75, &mut rays);
-        let c5 = cast_ray(0.25, 0.75, &mut rays);
+            let c1 = cast_ray(0.25, 0.25, rays);
+            let c2 = cast_ray(0.75, 0.25, rays);
+            let c3 = cast_ray(0.50, 0.50, rays);
+            let c4 = cast_ray(0.75, 0.75, rays);
+            let c5 = cast_ray(0.25, 0.75, rays);
 
-        (coord, (c1 + c2 + c3 + c4 + c5) / 5.0)
-    }) {
-        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
-    }
+            (coord, (c1 + c2 + c3 + c4 + c5) / 5.0)
+        };
+        for ((x, y), pixel) in coords.map(trace_coord) {
+            image.put_pixel(x as u32, y as u32, pixel.to_rgb());
+        }
+    };
+    tracer(&mut image, &mut rays);
 
     write_image(image, "test.png");
 
