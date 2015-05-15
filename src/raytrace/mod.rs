@@ -29,14 +29,13 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let mut image = image::RgbImage::new(width, height);
     let start_time = time::precise_time_ns();
 
-    let mut rays = 0;
-
-    let tracer = |rays: &mut u64, row_start, num_rows| {
+    let tracer = |row_start, num_rows| {
         let coords = (0..width).flat_map(|y| {
             iter::repeat(y).zip(row_start..num_rows)
         });
         let trace_coord = |coord| {
             let (x, y) = coord;
+            let mut rays = 0;
             let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
                 *rays += 1;
                 let fi = (x as f64) + dx;
@@ -58,24 +57,26 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
                 color
             };
 
-            let c1 = cast_ray(0.25, 0.25, rays);
-            let c2 = cast_ray(0.75, 0.25, rays);
-            let c3 = cast_ray(0.50, 0.50, rays);
-            let c4 = cast_ray(0.75, 0.75, rays);
-            let c5 = cast_ray(0.25, 0.75, rays);
+            let c1 = cast_ray(0.25, 0.25, &mut rays);
+            let c2 = cast_ray(0.75, 0.25, &mut rays);
+            let c3 = cast_ray(0.50, 0.50, &mut rays);
+            let c4 = cast_ray(0.75, 0.75, &mut rays);
+            let c5 = cast_ray(0.25, 0.75, &mut rays);
 
-            (coord, (c1 + c2 + c3 + c4 + c5) / 5.0)
+            (coord, rays, (c1 + c2 + c3 + c4 + c5) / 5.0)
         };
 
         let mut result = Vec::with_capacity((num_rows * width) as usize);
-        for pixel in coords.map(trace_coord) {
-            result.push(pixel)
+        let mut rays = 0;
+        for (coord, new_rays, color) in coords.map(trace_coord) {
+            rays += new_rays;
+            result.push((coord, color))
         }
 
-        result
+        (rays, result)
     };
 
-    let pixels = tracer(&mut rays, 0, height);
+    let (rays, pixels) = tracer(0, height);
 
     for ((x, y), pixel) in pixels {
         image.put_pixel(x as u32, y as u32, pixel.to_rgb());
