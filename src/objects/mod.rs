@@ -4,10 +4,12 @@ use vector::*;
 
 pub type Color = Vec3;
 
+#[derive(Clone)]
 pub enum Object {
     Sphere { center: Point, radius: f64 }
 }
 
+#[derive(Clone)]
 pub struct Material {
     pub ambient: Color,
     pub diffuse: Color,
@@ -17,18 +19,21 @@ pub struct Material {
 
 pub type MaterialObject = (Object, Material);
 
+#[derive(Clone)]
 pub struct Light {
     pub position: Point,
     pub color: Color,
     pub intensity: f64
 }
 
+#[derive(Clone)]
 pub struct Camera {
     pub position: Point,
     pub direction: Vec3,
     pub up: Vec3
 }
 
+#[derive(Clone)]
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,

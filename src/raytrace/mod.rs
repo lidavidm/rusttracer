@@ -16,6 +16,7 @@ pub fn write_image(image: Image, filename: &str) {
 }
 
 pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
+    let start_time = time::precise_time_ns();
     let f_width = width as f64;
     let f_height = height as f64;
     let v_fov = h_fov * (f_height / f_width);
@@ -26,61 +27,76 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     let norm_up = scene.camera.up.normalized();
     let norm_right = scene.camera.direction.cross(scene.camera.up).normalized();
 
-    let mut image = image::RgbImage::new(width, height);
-    let start_time = time::precise_time_ns();
+    let tracer = move |row_start, num_rows, scene: Scene| {
+        move || {
+            let coords = (0..width).flat_map(|y| {
+                iter::repeat(y).zip(row_start..(row_start + num_rows))
+            });
+            let trace_coord = |coord| {
+                let (x, y) = coord;
+                let mut rays = 0;
+                let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
+                    *rays += 1;
+                    let fi = (x as f64) + dx;
+                    let fj = (y as f64) + dy;
 
-    let tracer = |row_start, num_rows| {
-        let coords = (0..width).flat_map(|y| {
-            iter::repeat(y).zip(row_start..num_rows)
-        });
-        let trace_coord = |coord| {
-            let (x, y) = coord;
-            let mut rays = 0;
-            let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
-                *rays += 1;
-                let fi = (x as f64) + dx;
-                let fj = (y as f64) + dy;
+                    let u_rel = vw_per_pixel * (fi - (f_width / 2.0));
+                    let v_rel = vh_per_pixel * (fj - (f_height / 2.0));
 
-                let u_rel = vw_per_pixel * (fi - (f_width / 2.0));
-                let v_rel = vh_per_pixel * (fj - (f_height / 2.0));
+                    let pixel_loc = scene.camera.position + scene.camera.direction +
+                        (norm_right * u_rel) + (norm_up * v_rel);
 
-                let pixel_loc = scene.camera.position + scene.camera.direction +
-                    (norm_right * u_rel) + (norm_up * v_rel);
+                    let ray = Ray {
+                        origin: scene.camera.position,
+                        direction: pixel_loc - scene.camera.position
+                    };
 
-                let ray = Ray {
-                    origin: scene.camera.position,
-                    direction: pixel_loc - scene.camera.position
+                    let (color, new_rays) = lighting::get_color(&scene, &ray, 3);
+                    *rays += new_rays;
+                    color
                 };
 
-                let (color, new_rays) = lighting::get_color(&scene, &ray, 3);
-                *rays += new_rays;
-                color
+                let c1 = cast_ray(0.25, 0.25, &mut rays);
+                let c2 = cast_ray(0.75, 0.25, &mut rays);
+                let c3 = cast_ray(0.50, 0.50, &mut rays);
+                let c4 = cast_ray(0.75, 0.75, &mut rays);
+                let c5 = cast_ray(0.25, 0.75, &mut rays);
+
+                (coord, rays, (c1 + c2 + c3 + c4 + c5) / 5.0)
             };
 
-            let c1 = cast_ray(0.25, 0.25, &mut rays);
-            let c2 = cast_ray(0.75, 0.25, &mut rays);
-            let c3 = cast_ray(0.50, 0.50, &mut rays);
-            let c4 = cast_ray(0.75, 0.75, &mut rays);
-            let c5 = cast_ray(0.25, 0.75, &mut rays);
+            let mut result = Vec::with_capacity((num_rows * width) as usize);
+            let mut rays = 0;
+            for (coord, new_rays, color) in coords.map(trace_coord) {
+                rays += new_rays;
+                result.push((coord, color))
+            }
 
-            (coord, rays, (c1 + c2 + c3 + c4 + c5) / 5.0)
-        };
-
-        let mut result = Vec::with_capacity((num_rows * width) as usize);
-        let mut rays = 0;
-        for (coord, new_rays, color) in coords.map(trace_coord) {
-            rays += new_rays;
-            result.push((coord, color))
+            (rays, result)
         }
-
-        (rays, result)
     };
 
-    let (rays, pixels) = tracer(0, height);
+    // TODO: split based on core count
+    let split = height;
+    let handle1 = thread::spawn(tracer(0, split, (*scene).clone()));
+    let handle2 = thread::spawn(tracer(split, height - split, (*scene).clone()));
+
+    let mut image = image::RgbImage::new(width, height);
+    let mut rays = 0;
+    let (new_rays, pixels): (u64, Vec<((u32, u32), Color)>) = handle1.join().unwrap();
+
+    // TODO: direct copying into image. Also see Image.sub_image
+    for ((x, y), pixel) in pixels {
+        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
+    }
+    rays += new_rays;
+
+    let (new_rays, pixels): (u64, Vec<((u32, u32), Color)>) = handle2.join().unwrap();
 
     for ((x, y), pixel) in pixels {
         image.put_pixel(x as u32, y as u32, pixel.to_rgb());
     }
+    rays += new_rays;
 
     write_image(image, "test.png");
 
