@@ -77,7 +77,7 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     };
 
     // TODO: split based on core count
-    let split = height;
+    let split = height / 2;
     let handle1 = thread::spawn(tracer(0, split, (*scene).clone()));
     let handle2 = thread::spawn(tracer(split, height - split, (*scene).clone()));
 
