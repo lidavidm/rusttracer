@@ -1,7 +1,6 @@
 extern crate image;
 extern crate time;
 
-use std::iter;
 use std::path::Path;
 use std::thread;
 
@@ -29,12 +28,10 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
     let tracer = move |row_start, num_rows, scene: Scene| {
         move || {
-            let coords = (0..width).flat_map(|y| {
-                iter::repeat(y).zip(row_start..(row_start + num_rows))
-            });
-            let trace_coord = |coord| {
-                let (x, y) = coord;
-                let mut rays = 0;
+            let mut subimage = image::RgbImage::new(width, num_rows);
+            let mut rays = 0;
+            for (x, y, pixel) in subimage.enumerate_pixels_mut() {
+                let y = y + row_start;
                 let cast_ray = |dx: f64, dy: f64, rays: &mut u64| {
                     *rays += 1;
                     let fi = (x as f64) + dx;
@@ -62,17 +59,10 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
                 let c4 = cast_ray(0.75, 0.75, &mut rays);
                 let c5 = cast_ray(0.25, 0.75, &mut rays);
 
-                (coord, rays, (c1 + c2 + c3 + c4 + c5) / 5.0)
+                *pixel = ((c1 + c2 + c3 + c4 + c5) / 5.0).to_rgb();
             };
 
-            let mut result = Vec::with_capacity((num_rows * width) as usize);
-            let mut rays = 0;
-            for (coord, new_rays, color) in coords.map(trace_coord) {
-                rays += new_rays;
-                result.push((coord, color))
-            }
-
-            (rays, result)
+            (rays, subimage)
         }
     };
 
@@ -83,19 +73,15 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
 
     let mut image = image::RgbImage::new(width, height);
     let mut rays = 0;
-    let (new_rays, pixels): (u64, Vec<((u32, u32), Color)>) = handle1.join().unwrap();
+    let (new_rays, subimage): (u64, image::RgbImage) = handle1.join().unwrap();
 
-    // TODO: direct copying into image. Also see Image.sub_image
-    for ((x, y), pixel) in pixels {
-        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
-    }
+    // TODO: see Image.sub_image - is it thread safe?
+    image::GenericImage::copy_from(&mut image, &subimage, 0, 0);
     rays += new_rays;
 
-    let (new_rays, pixels): (u64, Vec<((u32, u32), Color)>) = handle2.join().unwrap();
+    let (new_rays, subimage): (u64, image::RgbImage) = handle2.join().unwrap();
 
-    for ((x, y), pixel) in pixels {
-        image.put_pixel(x as u32, y as u32, pixel.to_rgb());
-    }
+    image::GenericImage::copy_from(&mut image, &subimage, 0, split);
     rays += new_rays;
 
     write_image(image, "test.png");
