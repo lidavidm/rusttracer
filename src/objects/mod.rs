@@ -83,8 +83,9 @@ pub fn intersects(ray: &Ray, object: &Object) -> Option<f64> {
     let Ray { origin: e, direction: d } = *ray;
     match *object {
         Object::Sphere { center: c, radius: r } => {
-            let discrim = d.dot(e - c).powi(2) -
-                (d.dot(d)) * ((e - c).dot(e-c) - r.powi(2));
+            let dec = d.dot(e - c);
+            let discrim = dec * dec -
+                (d.dot(d)) * ((e - c).dot(e-c) - r*r);
             if discrim > T_THRESHOLD {
                 let sqrtd = discrim.sqrt();
                 let t1 = ((-d).dot(e - c) - sqrtd) / (d.dot(d));

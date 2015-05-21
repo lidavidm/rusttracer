@@ -67,22 +67,31 @@ pub fn raytrace(scene: &Scene, width: u32, height: u32, h_fov: f64) {
     };
 
     // TODO: split based on core count
-    let split = height / 2;
-    let handle1 = thread::spawn(tracer(0, split, (*scene).clone()));
-    let handle2 = thread::spawn(tracer(split, height - split, (*scene).clone()));
+    let mut handles = Vec::new();
+    let core_count = 4;
+    let split = height / core_count;
+
+    for i in 0..(core_count - 1) {
+        let new_thread = tracer(i * split, (i + 1) * split, (*scene).clone());
+        handles.push(thread::spawn(new_thread));
+    }
+    let rest = (core_count - 1) * split;
+    handles.push(thread::spawn(tracer(rest, height - rest, (*scene).clone())));
 
     let mut image = image::RgbImage::new(width, height);
     let mut rays = 0;
-    let (new_rays, subimage): (u64, image::RgbImage) = handle1.join().unwrap();
+    // handles.iter().enumerate() doesn't work since it won't take a mutable
+    // reference to the handle.
+    let mut i = 0;
+    for handle in handles {
+        let (new_rays, subimage) = handle.join().unwrap();
 
-    // TODO: see Image.sub_image - is it thread safe?
-    image::GenericImage::copy_from(&mut image, &subimage, 0, 0);
-    rays += new_rays;
-
-    let (new_rays, subimage): (u64, image::RgbImage) = handle2.join().unwrap();
-
-    image::GenericImage::copy_from(&mut image, &subimage, 0, split);
-    rays += new_rays;
+        // TODO: see Image.sub_image - is it thread safe?
+        image::GenericImage::copy_from(&mut image, &subimage, 0,
+                                       (i * split as usize) as u32);
+        rays += new_rays;
+        i += 1;
+    }
 
     write_image(image, "test.png");
 

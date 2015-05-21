@@ -1,7 +1,7 @@
 use vector::*;
 use objects::*;
 
-
+/// Computes the normal vector of the object at the collision point.
 fn get_normal(object: &Object, collision: Vec3) -> Vec3 {
     match *object {
         Object::Sphere { center: c, radius: _ } => {
@@ -10,10 +10,25 @@ fn get_normal(object: &Object, collision: Vec3) -> Vec3 {
     }
 }
 
+/// Computes the ambient color of the material.
+///
+/// Though this is broken up into a separate function, the ambient color is
+/// solely a function of the material, and does not depend on the light or
+/// object.
 fn get_ambient_color(material: &Material) -> Color {
     material.ambient
 }
 
+/// Compute the diffuse color of the object, according to the Lambertian model.
+///
+/// `n` is the normal vector to the object.
+///
+/// `l` is the vector from the intersection point to the light in consideration.
+///
+/// `distance` is more properly treated as a distance factor than the actual
+/// distance - the calculation simply divides by this factor, so if
+/// different attenuation behaviors are desired, the calling code can simply
+/// pass appropriate values to this function.
 fn get_diffuse_color(light: &Light, material: &Material,
                      n: Vec3, l: Vec3, distance: f64) -> Color {
     (material.diffuse * (*light).color *

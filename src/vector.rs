@@ -1,5 +1,6 @@
 use std::ops::{Add, Sub, Mul, Neg, Div};
 
+/// A 3-dimensional vector.
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
     pub x: f64,
@@ -7,11 +8,15 @@ pub struct Vec3 {
     pub z: f64
 }
 
+/// A point in R^3 (alias of a vector).
 pub type Point = Vec3;
 
+/// A ray in R^3.
 #[derive(Debug)]
 pub struct Ray {
+    /// The starting point of the ray.
     pub origin: Vec3,
+    /// The direction the ray travels. Not necessarily normalized.
     pub direction: Vec3
 }
 
